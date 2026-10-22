@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101116">
+<title>HimnGPT — твой AI-помощник</title>
+<style>
+:root{
+  --bg:#101116;--panel:#171920;--panel2:#20232d;--line:#2b2e39;
+  --text:#f3f4f8;--muted:#a4a8b8;--accent:#8b7cff;--accent2:#58d6c5;
+  --user:#29283b;--shadow:0 16px 50px #0005;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+button,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:flex;height:100dvh;width:100%;overflow:hidden}
+.sidebar{width:270px;flex-shrink:0;background:#14151b;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:15px;gap:14px;transition:transform .25s ease}
+.brand{display:flex;align-items:center;gap:10px;padding:5px 3px 12px}
+.logo{height:38px;width:38px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#54d6c6);color:#101116;font-weight:900;font-size:20px;box-shadow:0 5px 22px #8b7cff30}
+.brand-name{font-weight:800;letter-spacing:-.5px;font-size:18px}
+.brand-name span{color:var(--accent)}
+.new-chat{border:1px solid #3a3c49;background:linear-gradient(120deg,#252634,#1c2028);color:var(--text);border-radius:13px;padding:12px 13px;text-align:left;display:flex;align-items:center;gap:10px;transition:.2s}
+.new-chat:hover{border-color:var(--accent);transform:translateY(-1px)}
+.section-label{font-size:11px;color:#85899b;text-transform:uppercase;letter-spacing:1.2px;padding:5px 5px 0}
+.history{display:flex;flex-direction:column;gap:5px;overflow:auto;flex:1}
+.history-item{border:0;color:#c9cbda;background:transparent;text-align:left;padding:10px;border-radius:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.history-item:hover,.history-item.active{background:#242631;color:white}
+.sidebar-bottom{border-top:1px solid var(--line);padding-top:12px;color:var(--muted);font-size:12px;line-height:1.5}
+.sidebar-bottom strong{color:var(--text)}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;background:radial-gradient(ellipse at 50% -15%,#27234755,transparent 50%),var(--bg)}
+.topbar{height:62px;flex-shrink:0;border-bottom:1px solid #ffffff09;display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:12px}
+.top-left{display:flex;align-items:center;gap:10px;min-width:0}
+.menu-btn{display:none}
+.icon-btn{height:38px;width:38px;border:1px solid var(--line);border-radius:11px;background:#1a1c24;color:#e9eaf4;display:grid;place-items:center;transition:.2s}
+.icon-btn:hover{background:#292b37;border-color:#4b4d60}
+.top-title{font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status{font-size:11px;color:var(--accent2);display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);box-shadow:0 0 10px #58d6c5aa}
+.top-actions{display:flex;align-items:center;gap:8px}
+.badge{border:1px solid #343344;background:#201e30;color:#c9c2ff;padding:6px 9px;border-radius:9px;font-size:11px}
+.chat-scroll{flex:1;overflow-y:auto;scroll-behavior:smooth}
+.chat-inner{width:min(780px,100%);margin:0 auto;padding:24px 24px 28px}
+.welcome{min-height:calc(100% - 15px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:25px 0 50px;animation:fadeUp .55s ease both}
+.hero-logo{height:68px;width:68px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(135deg,#8b7cff,#56d7c5);color:#101116;font-size:32px;font-weight:900;box-shadow:0 10px 50px #8b7cff2c;animation:float 4s ease-in-out infinite}
+.welcome h1{font-size:clamp(27px,5vw,40px);letter-spacing:-1.5px;margin:24px 0 10px}
+.welcome h1 span{background:linear-gradient(100deg,#a79cff,#65e4d0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.welcome p{color:var(--muted);max-width:420px;font-size:14px;line-height:1.65;margin:0}
+.suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(520px,100%);margin-top:30px}
+.suggestion{padding:14px;text-align:left;background:#191b24;border:1px solid #2d303d;color:#e5e5f0;border-radius:14px;min-height:75px;transition:.2s}
+.suggestion:hover{transform:translateY(-2px);border-color:#6960ad;background:#222331}
+.suggestion b{display:block;font-size:13px;margin-bottom:5px}
+.suggestion span{font-size:12px;color:#9fa3b4;line-height:1.4;display:block}
+.messages{display:flex;flex-direction:column;gap:24px;padding-bottom:25px}
+.message{display:flex;gap:12px;animation:fadeUp .28s ease both;min-width:0}
+.message.user{justify-content:flex-end}
+.avatar{width:30px;height:30px;flex-shrink:0;border-radius:10px;background:linear-gradient(135deg,#8b7cff,#55d5c5);color:#101116;display:grid;place-items:center;font-weight:900;font-size:13px}
+.message.user .avatar{background:#353348;color:#dcd7ff;order:2}
+.bubble{max-width:min(620px,calc(100% - 42px));font-size:14px;line-height:1.7;overflow-wrap:anywhere}
+.message.user .bubble{background:var(--user);border:1px solid #3a3850;padding:11px 15px;border-radius:17px 5px 17px 17px;white-space:pre-wrap}
+.message.assistant .bubble{padding:3px 0;color:#e6e7ef;white-space:pre-wrap}
+.message-actions{display:flex;gap:7px;margin-top:8px}
+.mini-btn{border:1px solid #333642;background:#1a1c24;color:#aeb1c1;border-radius:8px;padding:5px 8px;font-size:11px}
+.mini-btn:hover{color:white;border-color:#68628d}
+.typing{display:flex;gap:5px;padding:10px 2px}
+.typing i{width:6px;height:6px;background:#aaa2ff;border-radius:50%;animation:bounce .9s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.composer-wrap{padding:10px 18px max(16px,env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 22%)}
+.composer{width:min(780px,100%);margin:auto;border:1px solid #3b3d4b;background:#1b1d26;border-radius:20px;padding:10px 11px 8px;box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s}
+.composer:focus-within{border-color:#7970c8;box-shadow:0 0 0 3px #8b7cff14,var(--shadow)}
+#prompt{display:block;width:100%;resize:none;max-height:150px;min-height:34px;background:transparent;border:0;outline:0;color:var(--text);padding:6px 5px;font-size:14px;line-height:1.5}
+#prompt::placeholder{color:#85899b}
+.composer-bottom{display:flex;justify-content:space-between;align-items:center;padding:3px 1px 0}
+.composer-hint{font-size:10px;color:#85899b}
+.send-btn{height:36px;width:39px;border:0;border-radius:12px;background:linear-gradient(135deg,#a194ff,#63dccc);color:#11131a;display:grid;place-items:center;transition:.2s}
+.send-btn:hover{transform:scale(1.04);filter:brightness(1.08)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+.disclaimer{text-align:center;color:#777b8d;font-size:10px;margin:8px auto 0;max-width:760px;line-height:1.45}
+.toast{position:fixed;bottom:105px;left:50%;transform:translate(-50%,12px);background:#292b37;border:1px solid #484b5c;color:white;border-radius:12px;padding:10px 14px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:10}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{display:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-5px);opacity:1}}
+@media(max-width:720px){
+ .sidebar{position:fixed;z-index:20;left:0;top:0;bottom:0;width:min(290px,84vw);transform:translateX(-105%);box-shadow:var(--shadow)}
+ .sidebar.open{transform:translateX(0)}
+ .overlay{position:fixed;inset:0;background:#0009;z-index:19;display:block;opacity:0;pointer-events:none;transition:opacity .25s}
+ .overlay.show{opacity:1;pointer-events:auto}
+ .menu-btn{display:grid}
+ .topbar{height:57px;padding:0 12px}
+ .top-actions{gap:5px}.badge{font-size:10px;padding:6px 7px}
+ .chat-inner{padding:17px 15px 22px}
+ .welcome{padding:12px 0 32px}
+ .hero-logo{height:60px;width:60px;border-radius:21px}
+ .welcome h1{margin-top:19px}
+ .suggestions{grid-template-columns:1fr;gap:8px;margin-top:24px}
+ .suggestion{min-height:unset;padding:12px}
+ .composer-wrap{padding:8px 10px max(12px,env(safe-area-inset-bottom))}
+ .composer{border-radius:17px}
+ .composer-hint{font-size:9px}
+ .message{gap:9px}
+ .bubble{font-size:13.5px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">H</div><div class="brand-name">Himn<span>GPT</span></div></div>
+    <button class="new-chat" id="newChat"><span style="font-size:20px">＋</span> Новый чат</button>
+    <div class="section-label">Недавние чаты</div>
+    <div class="history" id="history"></div>
+    <div class="sidebar-bottom"><strong>HimnGPT</strong><br>Демо-версия интерфейса<br>Переписки хранятся в этом браузере.</div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Открыть меню">☰</button>
+        <div><div class="top-title" id="topTitle">Новый чат</div><div class="status"><span class="dot"></span> Интерфейс активен</div></div>
+      </div>
+      <div class="top-actions"><span class="badge">✦ HIMN AI</span><button class="icon-btn" id="clearBtn" title="Очистить текущий чат" aria-label="Очистить чат">⌫</button></div>
+    </header>
+    <section class="chat-scroll" id="chatScroll">
+      <div class="chat-inner" id="chatInner">
+        <div class="welcome" id="welcome">
+          <div class="hero-logo">H</div>
+          <h1>Привет, это <span>HimnGPT</span></h1>
+          <p>Твой уголок для идей, вопросов и творчества. Напиши сообщение и начни разговор.</p>
+          <div class="suggestions">
+            <button class="suggestion" data-prompt="Придумай интересную идею для сайта"><b>✧ Идея для сайта</b><span>Найди вдохновение для нового проекта</span></button>
+            <button class="suggestion" data-prompt="Объясни простыми словами, как работает искусственный интеллект"><b>⌘ Объясни просто</b><span>Разберись в сложной теме</span></button>
+            <button class="suggestion" data-prompt="Напиши короткую историю про космос"><b>✎ Напиши историю</b><span>Создай что-нибудь необычное</span></button>
+            <button class="suggestion" data-prompt="Составь план изучения HTML для новичка"><b>⌁ Учись новому</b><span>Начни изучать программирование</span></button>
+          </div>
+        </div>
+        <div class="messages" id="messages"></div>
+      </div>
+    </section>
+    <div class="composer-wrap">
+      <form class="composer" id="chatForm">
+        <textarea id="prompt" rows="1" placeholder="Напиши сообщение HimnGPT..." aria-label="Сообщение"></textarea>
+        <div class="composer-bottom"><span class="composer-hint">Enter — отправить · Shift + Enter — новая строка</span><button class="send-btn" id="sendBtn" type="submit" aria-label="Отправить">➤</button></div>
+      </form>
+      <div class="disclaimer">HimnGPT сейчас работает в демонстрационном режиме. Ответы примерные и не генерируются настоящей нейросетью.</div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const promptEl = $('prompt'), messagesEl = $('messages'), welcome = $('welcome');
+  const historyEl = $('history'), topTitle = $('topTitle'), chatScroll = $('chatScroll');
+  let chats = [], activeId = null, busy = false, toastTimer;
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  function notify(text) {
+    const toast = $('toast'); toast.textContent = text; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+  function loadChats() {
+    try { chats = JSON.parse(localStorage.getItem('himngpt-chats') || '[]'); } catch { chats = []; }
+    if (!Array.isArray(chats)) chats = [];
+    renderHistory();
+  }
+  function saveChats() {
+    try { localStorage.setItem('himngpt-chats', JSON.stringify(chats)); }
+    catch { notify('Память браузера заполнена. Удали старые чаты.'); }
+    renderHistory();
+  }
+  function currentChat() { return chats.find(c => c.id === activeId); }
+  function startChat() {
+    activeId = uid();
+    chats.unshift({id:activeId,title:'Новый чат',messages:[],updated:Date.now()});
+    saveChats(); renderChat(); closeMenu(); promptEl.focus();
+  }
+  function renderHistory() {
+    historyEl.innerHTML = '';
+    chats.slice().sort((a,b)=>b.updated-a.updated).forEach(chat => {
+      const btn = document.createElement('button');
+      btn.className = 'history-item' + (chat.id === activeId ? ' active' : '');
+      btn.textContent = '◦  ' + (chat.title || 'Новый чат');
+      btn.title = chat.title || 'Новый чат';
+      btn.addEventListener('click', () => { activeId = chat.id; renderChat(); closeMenu(); });
+      historyEl.appendChild(btn);
+    });
+  }
+  function renderChat() {
+    const chat = currentChat();
+    if (!chat) { welcome.style.display='flex'; messagesEl.innerHTML=''; topTitle.textContent='Новый чат'; renderHistory(); return; }
+    topTitle.textContent = chat.title || 'Новый чат';
+    welcome.style.display = chat.messages.length ? 'none' : 'flex';
+    messagesEl.innerHTML = '';
+    chat.messages.forEach(msg => addMessageNode(msg.role,msg.content,false));
+    renderHistory(); scrollBottom();
+  }
+  function addMessageNode(role, content, animate=true) {
+    const wrap = document.createElement('article');
+    wrap.className = 'message ' + (role === 'user' ? 'user' : 'assistant');
+    if (!animate) wrap.style.animation='none';
+    const avatar = document.createElement('div'); avatar.className='avatar'; avatar.textContent=role==='user'?'Я':'H';
+    const body = document.createElement('div'); body.className='bubble'; body.textContent=content;
+    wrap.append(avatar,body);
+    if (role === 'assistant') {
+      const actions = document.createElement('div'); actions.className='message-actions';
+      const copy = document.createElement('button'); copy.className='mini-btn'; copy.textContent='▢ Копировать';
+      copy.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(body.textContent); notify('Ответ скопирован'); }
+        catch { notify('Не удалось скопировать. Выдели текст вручную.'); }
+      });
+      actions.append(copy); body.append(actions);
+    }
+    messagesEl.appendChild(wrap);
+    return body;
+  }
+  function scrollBottom() { requestAnimationFrame(()=>{chatScroll.scrollTop=chatScroll.scrollHeight;}); }
+  function makeDemoReply(text) {
+    const q = text.toLowerCase();
+    if (/(привет|здравствуй|дарова|хай|hello)/.test(q))
+      return 'Привет! 👋 Я HimnGPT — демонстрационный чат-помощник. Пока я показываю пример работы интерфейса, а не подключён к настоящей нейросети. Что хочешь попробовать?';
+    if (/(кто ты|что ты такое|himngpt)/.test(q))
+      return 'Я HimnGPT — твой проект чат-бота! ✨ Сейчас это фронтенд-прототип: интерфейс, история чатов и анимации работают в браузере. Для настоящих ответов ИИ нужно подключить модель через безопасный сервер.';
+    if (/(сайт|html|css|javascript|программ|код)/.test(q))
+      return 'Хорошая тема для проекта! 💡\\n\\nЧтобы развивать HimnGPT, можно:\\n1. Улучшить дизайн и добавить новые функции.\\n2. Опубликовать страницу на GitHub Pages.\\n3. Для настоящих ответов подключить ИИ через серверный API.\\n\\nВажно: не вставляй секретный API-ключ в этот HTML-файл — посетители смогут его увидеть.';
+    if (/(спасибо|благодар)/.test(q))
+      return 'Пожалуйста! 😊 Рад помочь с твоим проектом HimnGPT.';
+    if (/(помоги|как сделать|как создать|объясни)/.test(q))
+      return 'Давай разберёмся по шагам. 🧩\\n\\n1. Сначала уточни цель.\\n2. Раздели задачу на небольшие шаги.\\n3. Проверь результат после каждого шага.\\n\\nЭто демонстрационный ответ. После подключения настоящей языковой модели HimnGPT сможет формировать ответы по содержанию вопроса.';
+    return 'Я получил твоё сообщение: «' + text + '»\\n\\nСейчас HimnGPT находится в демо-режиме, поэтому я не могу по-настоящему анализировать любой вопрос. Интерфейс уже работает, а для умных ответов нужно подключить ИИ-модель через сервер.\\n\\nПодсказка: не публикуй личные данные или пароли в чате.';
+  }
+  function showTyping() {
+    const wrap=document.createElement('article'); wrap.className='message assistant'; wrap.id='typing';
+    const avatar=document.createElement('div'); avatar.className='avatar'; avatar.textContent='H';
+    const bubble=document.createElement('div'); bubble.className='bubble';
+    const dots=document.createElement('div'); dots.className='typing'; dots.innerHTML='<i></i><i></i><i></i>';
+    bubble.appendChild(dots); wrap.append(avatar,bubble); messagesEl.appendChild(wrap); scrollBottom();
+  }
+  function typeReply(reply, target, done) {
+    let i=0;
+    const tick=()=>{
+      if(i < reply.length) {
+        target.textContent += reply.slice(i,i+3); i+=3; scrollBottom();
+        setTimeout(tick, 12);
+      } else done();
+    }; tick();
+  }
+  function send(text) {
+    text = text.trim();
+    if (!text || busy) return;
+    if (!activeId || !currentChat()) {
+      activeId = uid(); chats.unshift({id:activeId,title:'Новый чат',messages:[],updated:Date.now()});
+    }
+    const chat=currentChat();
+    if (!chat.messages.length) chat.title = text.length > 28 ? text.slice(0,28)+'…' : text;
+    chat.messages.push({role:'user',content:text}); chat.updated=Date.now();
+    promptEl.value=''; resizeInput(); welcome.style.display='none';
+    addMessageNode('user',text); saveChats(); scrollBottom();
+    busy=true; $('sendBtn').disabled=true; showTyping();
+    const reply=makeDemoReply(text);
+    setTimeout(()=>{
+      const typing=$('typing'); if(typing) typing.remove();
+      const target=addMessageNode('assistant','');
+      typeReply(reply,target,()=>{
+        chat.messages.push({role:'assistant',content:reply}); chat.updated=Date.now();
+        saveChats(); busy=false; $('sendBtn').disabled=false; scrollBottom();
+      });
+    },650);
+  }
+  function resizeInput() { promptEl.style.height='auto'; promptEl.style.height=Math.min(promptEl.scrollHeight,150)+'px'; }
+  function closeMenu() { $('sidebar').classList.remove('open'); $('overlay').classList.remove('show'); }
+  $('chatForm').addEventListener('submit',e=>{e.preventDefault();send(promptEl.value);});
+  promptEl.addEventListener('input',resizeInput);
+  promptEl.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(promptEl.value);}
+  });
+  $('newChat').addEventListener('click',startChat);
+  $('clearBtn').addEventListener('click',()=>{
+    const chat=currentChat(); if(!chat){notify('Этот чат уже пустой');return;}
+    if(!chat.messages.length){notify('Этот чат уже пустой');return;}
+    chat.messages=[]; chat.title='Новый чат'; chat.updated=Date.now(); saveChats(); renderChat(); notify('Текущий чат очищен');
+  });
+  $('menuBtn').addEventListener('click',()=>{$('sidebar').classList.add('open');$('overlay').classList.add('show');});
+  $('overlay').addEventListener('click',closeMenu);
+  document.querySelectorAll('.suggestion').forEach(btn=>btn.addEventListener('click',()=>send(btn.dataset.prompt)));
+  loadChats();
+  if(chats.length){activeId=chats.slice().sort((a,b)=>b.updated-a.updated)[0].id;renderChat();}
+  else {activeId=null;renderChat();}
+})();
+</script>
+</body>
+</html>
